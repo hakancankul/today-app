@@ -13,8 +13,6 @@ export default function DateSelector({ onChange }: DateSelectorProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showAllDates, setShowAllDates] = useState(false);
 
-  const today = new Date();
-
   useEffect(() => {
     onChange({
       day: currentDate.getDate(),
