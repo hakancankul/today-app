@@ -9,8 +9,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Today App",
-  description: "Tarihte bugün neler olmuş?",
-  scrollRestoration: 'manual'
+  description: "Tarihte bugün neler olmuş?"
 };
 
 export default function RootLayout({
