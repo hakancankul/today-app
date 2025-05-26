@@ -18,7 +18,7 @@ const TABLE_NAMES: Record<EventType, string> = {
   tatil: 'tatil'
 };
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 5;
 
 export default function Home() {
   const [selectedType, setSelectedType] = useState<EventType | null>(null);
@@ -26,21 +26,19 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
   const listRef = useRef<HTMLDivElement>(null);
   const [dateSelection, setDateSelection] = useState<DateSelection>({
     day: new Date().getDate(),
     month: new Date().getMonth() + 1,
     allDates: false
   });
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [shouldScroll, setShouldScroll] = useState(false);
 
   // Kartların sıralamasını değiştiriyoruz
   const topEventTypes: EventType[] = ['olay', 'tatil'];
   const bottomEventTypes: EventType[] = ['dogum', 'olum'];
 
-  const fetchEvents = useCallback(async (page = 1, append = false) => {
+  const fetchEvents = useCallback(async (page = 1) => {
     if (!selectedType) {
       setEvents([]);
       return;
@@ -51,29 +49,25 @@ export default function Home() {
       const tableName = TABLE_NAMES[selectedType];
       const isTatil = selectedType === 'tatil';
 
-      // İlişkisel sorgu yapalım
       let query = supabase
         .from(tableName)
-        .select('*', { count: 'exact' });
+        .select('*', { count: 'exact' })
+        .order('id', { ascending: true });
 
-      // Tarih filtresi
       if (!dateSelection.allDates) {
         query = query
           .eq('gun', dateSelection.day)
           .eq('ay', dateSelection.month);
       }
 
-      // Arama filtresi
       if (searchQuery.trim()) {
         query = query.ilike('icerik', `%${searchQuery.trim()}%`);
       }
 
-      // Sıralama ve limit - tatil tablosu için yıl sıralaması yok
       if (!isTatil) {
         query = query.order('yil', { ascending: false });
       }
       
-      // Pagination
       const from = (page - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
       
@@ -86,23 +80,21 @@ export default function Home() {
         throw error;
       }
 
-      // Tatil tablosu için yıl alanını undefined olarak ayarla
-      const formattedData = data?.map(item => ({
+      const uniqueData = data?.filter((item, index, self) =>
+        index === self.findIndex((t) => t.id === item.id && t.icerik === item.icerik)
+      );
+
+      const formattedData = uniqueData?.map(item => ({
         ...item,
         yil: isTatil ? undefined : item.yil
       })) || [];
 
-      setHasMore(count ? from + ITEMS_PER_PAGE < count : false);
-      
-      if (append) {
-        setEvents(prev => [...prev, ...formattedData]);
-      } else {
-        setEvents(formattedData);
-      }
+      setTotalPages(Math.ceil((count || 0) / ITEMS_PER_PAGE));
+      setEvents(formattedData);
     } catch (error) {
       console.error('Error fetching events:', error);
       setEvents([]);
-      setHasMore(false);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -111,23 +103,22 @@ export default function Home() {
   useEffect(() => {
     if (selectedType) {
       setCurrentPage(1);
-      fetchEvents(1, false);
+      fetchEvents(1);
     }
   }, [selectedType, dateSelection, searchQuery, fetchEvents]);
 
+  // Veriler yüklendiğinde scroll işlemi yap
   useEffect(() => {
-    if (shouldScroll && listRef.current) {
-      const element = listRef.current; // Referansı saklayalım
-      const timer = setTimeout(() => {
-        const yOffset = -50;
-        const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-        window.scrollTo({ top: y, behavior: 'smooth' });
-        setShouldScroll(false);
-      }, 300);
-
-      return () => clearTimeout(timer);
+    if (selectedType && !loading && events.length > 0 && listRef.current) {
+      setTimeout(() => {
+        if (listRef.current) {
+          const yOffset = -50;
+          const y = listRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 100);
     }
-  }, [shouldScroll]);
+  }, [selectedType, loading, events]);
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
@@ -140,20 +131,22 @@ export default function Home() {
   const handleTypeSelect = useCallback((type: EventType) => {
     setSelectedType(prev => {
       const newType = prev === type ? null : type;
-      if (newType) {
-        setShouldScroll(true);
-      }
       return newType;
     });
   }, []);
 
-  const handleLoadMore = useCallback(() => {
-    if (!loading && hasMore) {
-      const nextPage = currentPage + 1;
-      setCurrentPage(nextPage);
-      fetchEvents(nextPage, true);
-    }
-  }, [currentPage, loading, hasMore, fetchEvents]);
+  const handlePageChange = useCallback((page: number) => {
+    // Sayfa değişiminde mevcut scroll pozisyonunu kaydet
+    const currentPosition = window.scrollY;
+    
+    setCurrentPage(page);
+    fetchEvents(page).finally(() => {
+      // Veriler yüklendikten sonra kaydedilen pozisyona dön
+      requestAnimationFrame(() => {
+        window.scrollTo(0, currentPosition);
+      });
+    });
+  }, [fetchEvents]);
 
   return (
     <main className="min-h-screen py-4 sm:py-6">
@@ -208,20 +201,15 @@ export default function Home() {
 
           {/* Sonuçlar Listesi */}
           {selectedType && (
-            <motion.div 
-              ref={listRef}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="w-full scroll-mt-6"
-            >
+            <div className="w-full" ref={listRef}>
               <EventList 
                 events={events} 
-                loading={loading} 
-                hasMore={hasMore}
-                onLoadMore={handleLoadMore}
+                loading={loading}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
               />
-            </motion.div>
+            </div>
           )}
         </div>
       </div>
