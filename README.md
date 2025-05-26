@@ -36,11 +36,7 @@ A modern web application that lets you explore historical events, births, deaths
 | Frontend | Next.js 14 | React framework with server components |
 | Language | TypeScript | Type-safe development |
 | Styling | Tailwind CSS | Utility-first CSS framework |
-| Backend | Supabase | - PostgreSQL database service
-||||- Real-time data capabilities
-||||- Row Level Security (RLS)
-||||- Built-in authentication
-||||- Auto-generated APIs |
+| Backend | Supabase | PostgreSQL database service with real-time capabilities, RLS, authentication, and auto-generated APIs |
 | State Management | React Hooks | Local state management with useState and useEffect |
 | Animation | Framer Motion | Advanced animation library |
 | Deployment | Vercel | Edge-optimized hosting platform |
