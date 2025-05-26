@@ -156,10 +156,10 @@ export default function Home() {
   }, [currentPage, loading, hasMore, fetchEvents]);
 
   return (
-    <main className="min-h-screen">
-      <div className="container mx-auto px-4" ref={containerRef}>
+    <main className="min-h-screen py-4 sm:py-6">
+      <div className="container mx-auto px-4">
         {/* Logo */}
-        <div className="absolute top-4 left-6">
+        <div className="flex justify-center sm:justify-start sm:absolute sm:top-4 sm:left-6 mb-4 sm:mb-0">
           <Image
             src="/logo.png"
             alt="Today Logo"
@@ -170,19 +170,19 @@ export default function Home() {
           />
         </div>
 
-        <div className="flex flex-col items-center max-w-5xl mx-auto pt-6">
+        <div className="flex flex-col items-center max-w-5xl mx-auto">
           {/* Tarih Seçici */}
-          <div className="w-full mb-6">
+          <div className="w-full mb-4 sm:mb-6">
             <DateSelector onChange={handleDateChange} />
           </div>
 
           {/* Arama Kutusu */}
-          <div className="w-full mb-6">
+          <div className="w-full mb-4 sm:mb-6">
             <SearchBar onSearch={handleSearch} />
           </div>
 
           {/* Kartlar - 2x2 Grid */}
-          <div className="w-full max-w-2xl grid grid-cols-2 gap-4 mb-6">
+          <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
             {/* Üst Sıra - Olaylar ve Özel Günler */}
             {topEventTypes.map((type) => (
               <EventCard
@@ -206,26 +206,23 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Sonuçlar Listesi - Sadece bir kart seçiliyken göster */}
-          <AnimatePresence>
-            {selectedType && (
-              <motion.div 
-                ref={listRef}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
-                className="w-full scroll-mt-12"
-              >
-                <EventList 
-                  events={events} 
-                  loading={loading} 
-                  hasMore={hasMore}
-                  onLoadMore={handleLoadMore}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Sonuçlar Listesi */}
+          {selectedType && (
+            <motion.div 
+              ref={listRef}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="w-full scroll-mt-6"
+            >
+              <EventList 
+                events={events} 
+                loading={loading} 
+                hasMore={hasMore}
+                onLoadMore={handleLoadMore}
+              />
+            </motion.div>
+          )}
         </div>
       </div>
     </main>
