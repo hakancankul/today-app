@@ -27,7 +27,7 @@ export default function EventCard({ type, isSelected, onClick }: EventCardProps)
   return (
     <motion.button
       onClick={onClick}
-      className={`glass-card w-full p-6 rounded-2xl text-left transition-all duration-300 ${
+      className={`glass-card w-full p-4 rounded-xl transition-all duration-300 flex items-center justify-center ${
         isSelected ? 'ring-2 ring-blue-500 bg-white/5' : ''
       }`}
       whileHover={{ scale: 1.02 }}
@@ -35,8 +35,8 @@ export default function EventCard({ type, isSelected, onClick }: EventCardProps)
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <div className="flex items-center space-x-4">
-        <div className="w-10 h-10 relative">
+      <div className="flex flex-col items-center space-y-2">
+        <div className="w-8 h-8 relative">
           <Image
             src={CARD_ICONS[type]}
             alt={CARD_TITLES[type]}
@@ -45,14 +45,9 @@ export default function EventCard({ type, isSelected, onClick }: EventCardProps)
             priority
           />
         </div>
-        <div>
-          <h3 className="text-xl font-semibold text-white">
-            {CARD_TITLES[type]}
-          </h3>
-          <p className="text-gray-400 text-sm mt-1">
-            {isSelected ? 'Seçildi' : 'Seçmek için tıkla'}
-          </p>
-        </div>
+        <h3 className="text-base font-medium text-white text-center">
+          {CARD_TITLES[type]}
+        </h3>
       </div>
     </motion.button>
   );

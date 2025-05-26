@@ -163,26 +163,26 @@ export default function Home() {
           <Image
             src="/logo.png"
             alt="Today Logo"
-            width={140}
-            height={48}
+            width={100}
+            height={34}
             className="text-white"
             priority
           />
         </div>
 
-        <div className="flex flex-col items-center max-w-5xl mx-auto">
+        <div className="flex flex-col items-center max-w-3xl mx-auto">
           {/* Tarih Seçici */}
           <div className="w-full mb-4 sm:mb-6">
             <DateSelector onChange={handleDateChange} />
           </div>
 
           {/* Arama Kutusu */}
-          <div className="w-full mb-4 sm:mb-6">
+          <div className="w-full max-w-2xl mb-4 sm:mb-6">
             <SearchBar onSearch={handleSearch} />
           </div>
 
           {/* Kartlar - 2x2 Grid */}
-          <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <div className="w-full max-w-xl grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
             {/* Üst Sıra - Olaylar ve Özel Günler */}
             {topEventTypes.map((type) => (
               <EventCard
