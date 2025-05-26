@@ -1,11 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Supabase URL ve Anon Key gerekli. Lütfen .env.local dosyasını kontrol edin.');
+}
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Basic connection test
+// Test connection in client-side only
 if (typeof window !== 'undefined') {
   supabase
     .from('olay')
@@ -15,7 +19,7 @@ if (typeof window !== 'undefined') {
       if (error) {
         console.error('Supabase connection error:', error);
       } else {
-        console.log('Supabase connection successful, test query result:', data);
+        console.log('Supabase connection successful');
       }
     });
 }
