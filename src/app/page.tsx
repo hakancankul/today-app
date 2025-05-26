@@ -8,7 +8,6 @@ import EventCard from '@/components/EventCard';
 import EventList from '@/components/EventList';
 import { supabase } from '@/lib/supabase';
 import type { EventType, HistoricalEvent, DateSelection } from '@/types';
-import { motion, AnimatePresence } from 'framer-motion';
 
 // Tablo isimlerini sabitleyelim
 const TABLE_NAMES: Record<EventType, string> = {

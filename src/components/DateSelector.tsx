@@ -14,9 +14,6 @@ export default function DateSelector({ onChange }: DateSelectorProps) {
   const [showAllDates, setShowAllDates] = useState(false);
 
   const today = new Date();
-  const isToday = currentDate.getDate() === today.getDate() && 
-                  currentDate.getMonth() === today.getMonth() &&
-                  currentDate.getFullYear() === today.getFullYear();
 
   useEffect(() => {
     onChange({
