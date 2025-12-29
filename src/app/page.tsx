@@ -75,7 +75,20 @@ export default function Home() {
       const { data, error, count } = await query;
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.error('❌ Supabase sorgu hatası:', error);
+        console.error('Hata kodu:', error.code);
+        console.error('Hata mesajı:', error.message);
+        console.error('Hata detayı:', error.details);
+        console.error('Sorgulanan tablo:', tableName);
+        console.error('Tarih filtresi:', dateSelection);
+        console.error('Arama sorgusu:', searchQuery);
+        
+        // RLS hatası kontrolü
+        if (error.code === 'PGRST301' || error.message?.includes('permission') || error.message?.includes('policy')) {
+          console.error('⚠️ RLS (Row Level Security) Hatası!');
+          console.error('Supabase Dashboard > Authentication > Policies bölümünden tablolarınız için SELECT izni veren policy ekleyin.');
+        }
+        
         throw error;
       }
 

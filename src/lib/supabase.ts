@@ -3,61 +3,51 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Supabase URL ve Anon Key gerekli. Lütfen .env.local dosyasını kontrol edin.');
+// Client-side'da environment variables kontrolü
+if (typeof globalThis.window !== 'undefined') {
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('❌ Supabase Environment Variables Eksik!');
+    console.error('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? '✅ Set edilmiş' : '❌ Eksik');
+    console.error('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseKey ? '✅ Set edilmiş' : '❌ Eksik');
+    console.error('Lütfen deploy platformunuzda (Vercel, Netlify vb.) environment variables ayarlarını kontrol edin.');
+  } else {
+    console.log('✅ Supabase Environment Variables mevcut');
+  }
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Test connection in client-side only
-if (typeof window !== 'undefined') {
-  supabase
-    .from('olay')
-    .select('*')
-    .limit(1)
-    .then(({ error }) => {
-      if (error) {
-        console.error('Supabase connection error:', error);
-      } else {
-        console.log('Supabase connection successful');
-      }
-    });
+// Server-side'da hata fırlat
+if (typeof globalThis.window === 'undefined' && (!supabaseUrl || !supabaseKey)) {
+  throw new Error('Supabase URL ve Anon Key gerekli. Lütfen environment variables ayarlarını kontrol edin.');
 }
 
-// Test connection and list all tables
-const testConnection = async () => {
-  try {
-    // Test basic connection
-    const { data: tableList, error: tablesError } = await supabase
+export const supabase = createClient(supabaseUrl || '', supabaseKey || '', {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+});
+
+// Client-side connection test
+if (typeof globalThis.window !== 'undefined') {
+  // Test connection
+  void (async () => {
+    const { data, error } = await supabase
       .from('olay')
       .select('*')
       .limit(1);
-
-    if (tablesError) {
-      console.error('Failed to connect to Supabase:', tablesError);
-      return;
+    
+    if (error) {
+      console.error('❌ Supabase bağlantı hatası:', error);
+      console.error('Hata kodu:', error.code);
+      console.error('Hata mesajı:', error.message);
+      console.error('Hata detayı:', error.details);
+      console.error('💡 Çözüm önerileri:');
+      console.error('1. Supabase Dashboard > Settings > API > RLS politikalarını kontrol edin');
+      console.error('2. Tablolar için SELECT izni veren RLS policy olmalı');
+      console.error('3. Environment variables doğru mu kontrol edin');
+    } else {
+      console.log('✅ Supabase bağlantısı başarılı');
+      console.log('Örnek veri:', data);
     }
-
-    console.log('Successfully connected to Supabase');
-    console.log('Sample data from olay table:', tableList);
-
-    // Test each table
-    const tables = ['olay', 'dogum', 'olum', 'tatil'];
-    for (const table of tables) {
-      const { data, error } = await supabase
-        .from(table)
-        .select('*')
-        .limit(1);
-
-      console.log(`Table ${table} check:`, {
-        exists: !error,
-        error: error ? error.message : null,
-        data
-      });
-    }
-  } catch (err) {
-    console.error('Supabase connection test failed:', err);
-  }
-};
-
-testConnection(); 
+  })();
+} 
