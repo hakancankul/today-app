@@ -22,6 +22,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ### Supabase URL ve Key Nerede Bulunur:
 1. Supabase Dashboard > Settings > API
 2. `Project URL` → `NEXT_PUBLIC_SUPABASE_URL`
+   - **ÖNEMLİ:** URL `https://` ile başlamalı! Örnek: `https://ilaftjcrkhmptrcfszfo.supabase.co`
+   - Eğer sadece `ilaftjcrkhmptrcfszfo.supabase.co` şeklinde eklediyseniz, başına `https://` ekleyin
+   - Kod otomatik olarak `https://` ekleyecektir ama environment variable'ı düzeltmek daha iyidir
 3. `anon` `public` key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 ## 2. 🔐 RLS (Row Level Security) Politikaları
