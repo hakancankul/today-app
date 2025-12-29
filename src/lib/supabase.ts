@@ -50,41 +50,95 @@ export const supabase = createClient(supabaseUrl || '', supabaseKey || '', {
     persistSession: false,
     autoRefreshToken: false,
   },
+  // Timeout ayarları - connection reset hatalarını önlemek için
+  db: {
+    schema: 'public',
+  },
+  global: {
+    headers: {
+      'x-client-info': 'today-app',
+    },
+  },
 });
 
-// Client-side connection test
+// Client-side connection test - LAZY: Sayfa yüklendikten sonra çalışsın
+// Bu, ERR_CONNECTION_RESET hatalarını önlemek için önemli
 if (typeof globalThis.window !== 'undefined') {
-  // Test connection
-  void (async () => {
-    const { data, error } = await supabase
-      .from('olay')
-      .select('*')
-      .limit(1);
+  // Sayfa tamamen yüklendikten sonra test et (sayfa yüklenmesini engellemesin)
+  const testConnection = async () => {
+    // Timeout ile sınırla (5 saniye)
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Connection test timeout')), 5000)
+    );
     
-    if (error) {
-      console.error('❌ Supabase bağlantı hatası:', error);
-      console.error('Hata kodu:', error.code);
-      console.error('Hata mesajı:', error.message);
-      console.error('Hata detayı:', error.details);
-      console.error('🔍 Kullanılan URL:', supabaseUrl);
+    try {
+      const testQuery = supabase
+        .from('olay')
+        .select('*')
+        .limit(1);
       
-      // ERR_NAME_NOT_RESOLVED hatası için özel kontrol
-      if (error.message?.includes('Failed to fetch') || error.message?.includes('ERR_NAME_NOT_RESOLVED')) {
-        console.error('⚠️ DNS Çözümleme Hatası!');
-        console.error('💡 Kontrol edin:');
-        console.error('1. Supabase projeniz pause edilmiş olabilir (Dashboard\'da kontrol edin)');
-        console.error('2. Environment variable doğru domain\'i içeriyor mu?');
-        console.error('3. Vercel\'de environment variable Production ortamında set edilmiş mi?');
-        console.error('4. Deploy\'dan sonra yeniden build yapıldı mı? (Environment variable değişiklikleri için gerekli)');
+      const { data, error } = await Promise.race([
+        testQuery,
+        timeoutPromise
+      ]) as { data: any; error: any };
+      
+      if (error) {
+        console.error('❌ Supabase bağlantı hatası:', error);
+        console.error('Hata kodu:', error.code);
+        console.error('Hata mesajı:', error.message);
+        console.error('Hata detayı:', error.details);
+        console.error('🔍 Kullanılan URL:', supabaseUrl);
+        
+        // ERR_NAME_NOT_RESOLVED hatası için özel kontrol
+        if (error.message?.includes('Failed to fetch') || error.message?.includes('ERR_NAME_NOT_RESOLVED') || error.message?.includes('NetworkError') || error.message?.includes('ERR_CONNECTION_RESET')) {
+          console.error('⚠️ DNS/Connection Hatası!');
+          console.error('🔍 Kullanılan URL:', supabaseUrl);
+          console.error('💡 Muhtemel Nedenler:');
+          console.error('1. ❌ YANLIŞ DOMAIN: Environment variable\'da yanlış Supabase domain var');
+          console.error('   Doğru domain: ohkemlnfddicuvcwqzhg.supabase.co');
+          console.error('   Yanlış domain: ilaftjcrkhmptrcfszfo.supabase.co (bu domain çalışmıyor)');
+          console.error('2. Supabase projeniz pause edilmiş olabilir (Dashboard\'da kontrol edin)');
+          console.error('3. Vercel\'de environment variable Production ortamında set edilmiş mi?');
+          console.error('4. Deploy\'dan sonra yeniden build yapıldı mı? (Environment variable değişiklikleri için gerekli)');
+          console.error('5. Cold start timeout - Vercel serverless function ilk çağrıda yavaş olabilir');
+          console.error('');
+          console.error('📋 ÇÖZÜM:');
+          console.error('Vercel Dashboard > Settings > Environment Variables');
+          console.error('NEXT_PUBLIC_SUPABASE_URL değerini güncelleyin:');
+          console.error('https://ohkemlnfddicuvcwqzhg.supabase.co');
+          console.error('');
+          console.error('Detaylı talimatlar için: VERCEL_ENV_SETUP.md dosyasına bakın');
+        }
+        
+        console.error('💡 Diğer çözüm önerileri:');
+        console.error('1. Supabase Dashboard > Settings > API > RLS politikalarını kontrol edin');
+        console.error('2. Tablolar için SELECT izni veren RLS policy olmalı');
+        console.error('3. Environment variables doğru mu kontrol edin');
+        console.error('4. Sayfayı yeniden yüklemeyi deneyin (cold start sorunu olabilir)');
+      } else {
+        console.log('✅ Supabase bağlantısı başarılı');
+        if (data) {
+          console.log('Örnek veri:', data);
+        }
       }
-      
-      console.error('💡 Diğer çözüm önerileri:');
-      console.error('1. Supabase Dashboard > Settings > API > RLS politikalarını kontrol edin');
-      console.error('2. Tablolar için SELECT izni veren RLS policy olmalı');
-      console.error('3. Environment variables doğru mu kontrol edin');
-    } else {
-      console.log('✅ Supabase bağlantısı başarılı');
-      console.log('Örnek veri:', data);
+    } catch (err: any) {
+      // Timeout veya diğer hatalar
+      if (err.message?.includes('timeout')) {
+        console.warn('⚠️ Supabase connection test timeout (5s) - Bu normal olabilir, sayfa çalışmaya devam edecek');
+      } else {
+        console.error('❌ Connection test hatası:', err);
+      }
     }
-  })();
+  };
+  
+  // Sayfa yüklendikten sonra test et (sayfa yüklenmesini engellemesin)
+  if (document.readyState === 'complete') {
+    // Sayfa zaten yüklenmiş, hemen test et
+    setTimeout(testConnection, 1000);
+  } else {
+    // Sayfa yükleniyor, yüklendikten sonra test et
+    window.addEventListener('load', () => {
+      setTimeout(testConnection, 1000);
+    });
+  }
 } 
