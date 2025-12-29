@@ -25,17 +25,26 @@ if (typeof globalThis.window !== 'undefined') {
       const urlObj = new URL(supabaseUrl);
       console.log('📍 Supabase Domain:', urlObj.hostname);
       console.log('🔒 Protokol:', urlObj.protocol);
-    } catch (e) {
+    } catch {
       console.warn('⚠️ URL parse edilemedi:', supabaseUrl?.substring(0, 50));
     }
   }
 }
 
-// Server-side'da hata fırlat
+// Server-side'da uyarı ver (build sırasında hata fırlatma)
 if (typeof globalThis.window === 'undefined' && (!supabaseUrl || !supabaseKey)) {
-  throw new Error('Supabase URL ve Anon Key gerekli. Lütfen environment variables ayarlarını kontrol edin.');
+  // Build sırasında hata fırlatmak yerine uyarı ver
+  // Environment variables Vercel'de runtime'da set edilebilir
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('⚠️ UYARI: Supabase environment variables build sırasında bulunamadı!');
+    console.warn('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? '✅' : '❌ Eksik');
+    console.warn('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseKey ? '✅' : '❌ Eksik');
+    console.warn('Vercel Dashboard > Settings > Environment Variables bölümünden kontrol edin.');
+    console.warn('Build devam ediyor, ancak runtime\'da environment variables set edilmiş olmalı.');
+  }
 }
 
+// Supabase client'ı oluştur (env vars yoksa boş string ile, runtime'da hata alınacak)
 export const supabase = createClient(supabaseUrl || '', supabaseKey || '', {
   auth: {
     persistSession: false,
