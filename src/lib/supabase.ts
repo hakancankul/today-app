@@ -15,7 +15,7 @@ if (typeof window !== 'undefined') {
     .from('olay')
     .select('*')
     .limit(1)
-    .then(({ data, error }) => {
+    .then(({ error }) => {
       if (error) {
         console.error('Supabase connection error:', error);
       } else {
