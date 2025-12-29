@@ -77,10 +77,18 @@ if (typeof globalThis.window !== 'undefined') {
         .select('*')
         .limit(1);
       
-      const { data, error } = await Promise.race([
+      const result = await Promise.race([
         testQuery,
         timeoutPromise
-      ]) as { data: any; error: any };
+      ]) as { data: unknown; error: { code?: string; message?: string; details?: string } | null } | Error;
+      
+      // Eğer timeout olduysa (timeout promise Error fırlatır)
+      if (result instanceof Error) {
+        throw result;
+      }
+      
+      // Supabase query sonucu
+      const { data, error } = result;
       
       if (error) {
         console.error('❌ Supabase bağlantı hatası:', error);
@@ -121,9 +129,10 @@ if (typeof globalThis.window !== 'undefined') {
           console.log('Örnek veri:', data);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Timeout veya diğer hatalar
-      if (err.message?.includes('timeout')) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      if (errorMessage.includes('timeout')) {
         console.warn('⚠️ Supabase connection test timeout (5s) - Bu normal olabilir, sayfa çalışmaya devam edecek');
       } else {
         console.error('❌ Connection test hatası:', err);
